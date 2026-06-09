@@ -2,8 +2,9 @@ name: Keep Alive
 
 on:
   schedule:
-    - cron: '0 */6 * * *'  # runs every 6 hours
-  workflow_dispatch:         # allows manual trigger from GitHub
+    - cron: '0 */6 * * *'   # ping Streamlit every 6 hours
+    - cron: '0 9 * * 1'     # commit to repo every Monday at 9am UTC
+  workflow_dispatch:          # allows manual trigger from GitHub
 
 jobs:
   ping:
@@ -36,3 +37,13 @@ jobs:
             console.log('Done - app is awake.');
           })().catch(e => { console.error('Warning:', e.message); process.exit(0); });
           "
+
+      - name: Weekly repo commit (prevents GitHub disabling workflow after 60 days)
+        if: github.event.schedule == '0 9 * * 1'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          echo "Last weekly ping: $(date -u)" > last-ping.txt
+          git add last-ping.txt
+          git commit -m "chore: weekly keep-alive $(date -u +%Y-%m-%d)" || echo "Nothing to commit"
+          git push
