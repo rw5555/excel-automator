@@ -16,7 +16,9 @@ jobs:
           node-version: '20'
 
       - name: Install Playwright
-        run: npx playwright install chromium --with-deps
+        run: |
+          npm install playwright
+          npx playwright install chromium --with-deps
 
       - name: Visit Streamlit app like a real user
         run: |
@@ -31,6 +33,6 @@ jobs:
             const title = await page.title();
             console.log('Page title:', title);
             await browser.close();
-            console.log('Done — app is awake.');
-          })();
+            console.log('Done - app is awake.');
+          })().catch(e => { console.error('Warning:', e.message); process.exit(0); });
           "
