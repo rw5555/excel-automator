@@ -2,7 +2,7 @@ name: Keep Alive
 
 on:
   schedule:
-    - cron: '0 */6 * * *'   # ping Streamlit every 6 hours
+    - cron: '0 */3 * * *'   # ping Streamlit every 3 hours (GitHub delays scheduled runs)
     - cron: '0 9 * * 1'     # commit to repo every Monday at 9am UTC
   workflow_dispatch:          # allows manual trigger from GitHub
 
@@ -21,7 +21,7 @@ jobs:
           npm install playwright
           npx playwright install chromium --with-deps
 
-      - name: Visit Streamlit app like a real user
+      - name: Visit Streamlit app and wake it if asleep
         run: |
           node -e "
           const { chromium } = require('playwright');
@@ -30,11 +30,21 @@ jobs:
             const page = await browser.newPage();
             console.log('Navigating to app...');
             await page.goto('https://excel-automator-5555.streamlit.app/', { waitUntil: 'networkidle', timeout: 60000 });
-            await page.waitForTimeout(10000);
+
+            const wakeButton = page.getByRole('button', { name: /get this app back up/i });
+            if (await wakeButton.isVisible().catch(() => false)) {
+              console.log('App is asleep — clicking wake button...');
+              await wakeButton.click();
+              await page.waitForTimeout(60000);
+            } else {
+              console.log('App already awake.');
+              await page.waitForTimeout(10000);
+            }
+
             const title = await page.title();
-            console.log('Page title:', title);
+            console.log('Final page title:', title);
             await browser.close();
-            console.log('Done - app is awake.');
+            console.log('Done.');
           })().catch(e => { console.error('Warning:', e.message); process.exit(0); });
           "
 
