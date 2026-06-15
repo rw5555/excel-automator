@@ -52,7 +52,7 @@ jobs:
           "
 
       - name: Weekly repo commit (prevents GitHub disabling workflow after 60 days)
-        if: github.event.schedule == '0 9 * * 1'
+        if: github.event.schedule == '0 9 * * 1' || github.event_name == 'workflow_dispatch'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
